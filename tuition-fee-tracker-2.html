@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tuition Fee Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FFF7EE; --card:#fff; --purple:#7C3AED; --purple-l:#EDE9FE;
+  --gold:#F59E0B; --gold-l:#FEF3C7; --green:#059669; --green-l:#D1FAE5;
+  --red:#DC2626; --red-l:#FEE2E2; --text:#1E1B4B; --muted:#6B7280;
+  --border:#E5E7EB; --shadow:0 4px 24px rgba(124,58,237,.10);
+}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── LOCK ── */
+#lockScreen{position:fixed;inset:0;z-index:999;background:linear-gradient(135deg,#4C1D95,#7C3AED,#6D28D9);display:flex;align-items:center;justify-content:center}
+#lockScreen.hidden{display:none}
+.lock-box{background:#fff;border-radius:28px;padding:44px 32px;width:92%;max-width:360px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.3);animation:popIn .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+.lock-icon{width:70px;height:70px;border-radius:50%;background:var(--purple-l);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:2rem}
+.lock-box h2{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.6rem;color:var(--purple);margin-bottom:6px}
+.lock-box p{color:var(--muted);font-size:.95rem;margin-bottom:22px}
+.pw-wrap{position:relative;margin-bottom:10px}
+.pw-wrap input{width:100%;padding:13px 44px 13px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Poppins',sans-serif;font-size:1.05rem;color:var(--text);background:var(--bg);outline:none;letter-spacing:3px;transition:border-color .2s}
+.pw-wrap input:focus{border-color:var(--purple)}
+.pw-wrap input.err{border-color:var(--red);animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--muted)}
+.lock-err{color:var(--red);font-size:.85rem;font-weight:600;min-height:20px;margin-bottom:10px}
+.btn-unlock{width:100%;padding:13px;background:var(--purple);color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1.05rem;cursor:pointer;transition:background .15s}
+.btn-unlock:hover{background:#6D28D9}
+.lock-hint{margin-top:14px;font-size:.8rem;color:var(--muted)}
+
+/* ── HEADER ── */
+header{background:linear-gradient(135deg,var(--purple),#6D28D9,#4C1D95);color:#fff;padding:24px 20px 30px;position:relative;overflow:hidden}
+header::before{content:'📚';position:absolute;right:-10px;top:-20px;font-size:130px;opacity:.07;pointer-events:none}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+header h1{font-family:'Nunito',sans-serif;font-size:1.9rem;font-weight:900;letter-spacing:-0.5px}
+header p{font-size:.9rem;opacity:.8;margin-top:3px}
+.hdr-btns{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0}
+.btn-hdr{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:50px;padding:7px 16px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;white-space:nowrap}
+.btn-hdr:hover{background:rgba(255,255,255,.28)}
+
+/* EARNINGS PILLS */
+.earnings-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.epill{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.22);border-radius:50px;padding:8px 18px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.95rem}
+.epill span{font-size:.72rem;font-weight:400;opacity:.8;display:block}
+
+/* ── ADD STUDENT BAR ── */
+.add-bar{background:var(--card);border-radius:18px;padding:20px;margin:20px 16px 0;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.add-bar .fg{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px}
+.add-bar label{font-size:.8rem;font-weight:600;color:var(--muted)}
+.add-bar input{padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-family:'Poppins',sans-serif;font-size:.95rem;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s}
+.add-bar input:focus{border-color:var(--purple)}
+.btn-add-student{background:var(--gold);color:#1a0f00;border:none;border-radius:10px;padding:11px 22px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;white-space:nowrap;box-shadow:0 3px 12px rgba(245,158,11,.3);transition:transform .15s}
+.btn-add-student:hover{transform:translateY(-1px)}
+
+/* ── MAIN ── */
+main{padding:18px 16px 60px;max-width:900px;margin:0 auto}
+
+/* ── STUDENT CARD ── */
+.student-card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);margin-bottom:22px;overflow:hidden;border:2px solid var(--border);transition:box-shadow .2s}
+.student-card:hover{box-shadow:0 8px 32px rgba(124,58,237,.14)}
+
+.card-head{background:linear-gradient(135deg,var(--purple-l),#F5F3FF);padding:18px 20px;display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--border)}
+.avatar{width:52px;height:52px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:1.3rem;flex-shrink:0}
+.card-head-info h2{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.25rem;color:var(--purple)}
+.card-head-info .meta{font-size:.88rem;color:var(--muted);margin-top:2px}
+.card-head-info .meta strong{color:var(--text)}
+.paid-till-badge{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.ptb{padding:6px 14px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;white-space:nowrap}
+.ptb.green{background:var(--green-l);color:var(--green)}
+.ptb.gray{background:var(--border);color:var(--muted)}
+.total-paid-chip{background:var(--purple-l);color:var(--purple);padding:4px 12px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.78rem}
+
+/* MONTHS TABLE */
+.months-wrap{padding:6px 16px 16px}
+.month-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;margin-bottom:4px;transition:background .15s}
+.month-row:hover{background:var(--bg)}
+.month-row.is-paid{background:var(--green-l)}
+.month-row.before-join{opacity:.35;pointer-events:none}
+
+.month-cb{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);appearance:none;cursor:pointer;flex-shrink:0;transition:all .15s;position:relative}
+.month-cb:checked{background:var(--green);border-color:var(--green)}
+.month-cb:checked::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:.85rem;font-weight:700}
+.month-label{font-family:'Nunito',sans-serif;font-weight:700;font-size:1rem;min-width:36px;color:var(--text)}
+.month-date-input{flex:1;padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Poppins',sans-serif;font-size:.88rem;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s;min-width:0}
+.month-date-input:focus{border-color:var(--purple)}
+.month-row.is-paid .month-date-input{border-color:var(--green);background:var(--green-l)}
+.submitted-label{font-size:.75rem;color:var(--muted);white-space:nowrap}
+
+/* CARD ACTIONS */
+.card-actions{display:flex;gap:10px;padding:0 16px 16px}
+.btn-card{flex:1;padding:11px;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;cursor:pointer;transition:all .15s}
+.btn-edit-date{background:var(--gold-l);color:#78350F}
+.btn-edit-date:hover{background:var(--gold);color:#1a0f00}
+.btn-del-student{background:var(--red-l);color:var(--red)}
+.btn-del-student:hover{background:#FECACA}
+
+/* ── OVERLAYS ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(30,27,75,.45);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--card);border-radius:22px;padding:28px;width:94%;max-width:420px;box-shadow:0 20px 60px rgba(124,58,237,.22);animation:slideUp .22s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal h2{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.3rem;margin-bottom:18px;color:var(--purple)}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.fg label{font-size:.82rem;font-weight:600;color:var(--muted)}
+.fg input{padding:11px 14px;border:2px solid var(--border);border-radius:11px;font-family:'Poppins',sans-serif;font-size:.98rem;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s}
+.fg input:focus{border-color:var(--purple)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-ok{flex:1;padding:12px;background:var(--purple);color:#fff;border:none;border-radius:11px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.98rem;cursor:pointer}
+.btn-ok:hover{background:#6D28D9}
+.btn-cancel-m{padding:12px 18px;background:var(--border);color:var(--muted);border:none;border-radius:11px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.98rem;cursor:pointer}
+
+/* DEL MODAL */
+.del-modal{text-align:center}
+.del-modal .del-icon{font-size:2.8rem;margin-bottom:10px}
+.del-modal h2{color:var(--red)!important}
+.del-modal .del-name{font-family:'Nunito',sans-serif;font-weight:800;font-size:1.1rem;color:var(--text);margin:8px 0 4px}
+.del-modal .del-warn{font-size:.82rem;color:var(--red);margin-bottom:16px}
+.btn-del-confirm{flex:1;padding:12px;background:var(--red);color:#fff;border:none;border-radius:11px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.98rem;cursor:pointer}
+.btn-del-confirm:hover{background:#B91C1C}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty-state .ei{font-size:3.5rem;margin-bottom:12px}
+.empty-state h3{font-family:'Nunito',sans-serif;font-size:1.3rem;color:var(--text);margin-bottom:6px}
+
+@media(max-width:500px){
+  header h1{font-size:1.5rem}
+  .add-bar{flex-direction:column}
+  .add-bar .fg{min-width:100%}
+  .card-head{flex-wrap:wrap}
+  .paid-till-badge{margin-left:0;flex-direction:row;align-items:center;flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<!-- LOCK -->
+<div id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-icon">🔐</div>
+    <h2 id="lockTitle">My Tuition</h2>
+    <p id="lockSub">Password enter karo</p>
+    <div class="pw-wrap">
+      <input type="password" id="lockInp" placeholder="Password..." onkeydown="if(event.key==='Enter')doUnlock()"/>
+      <button class="eye-btn" onclick="toggleEye('lockInp',this)">👁️</button>
+    </div>
+    <div class="lock-err" id="lockErr"></div>
+    <button class="btn-unlock" onclick="doUnlock()">Unlock 🔓</button>
+    <div class="lock-hint" id="lockHint"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+<header>
+  <div class="header-top">
+    <div>
+      <h1>📖 Tuition Fee Tracker</h1>
+      <p>Har student ka fee record ek jagah</p>
+    </div>
+    <div class="hdr-btns">
+      <button class="btn-hdr" onclick="lockApp()">🔒 Lock</button>
+      <button class="btn-hdr" style="font-size:.78rem;padding:5px 12px" onclick="openChpw()">🔑 Change Password</button>
+    </div>
+  </div>
+  <div class="earnings-row">
+    <div class="epill"><span>Total Students</span><span id="stat-students">0</span></div>
+    <div class="epill" style="background:rgba(5,150,105,.28);border-color:rgba(5,150,105,.35)"><span>Total Collected</span><span id="stat-earned">₹0</span></div>
+    <div class="epill" style="background:rgba(245,158,11,.28);border-color:rgba(245,158,11,.35)"><span>Pending (this month)</span><span id="stat-pending">0 students</span></div>
+  </div>
+</header>
+
+<!-- ADD BAR -->
+<div class="add-bar">
+  <div class="fg"><label>Student Name *</label><input type="text" id="a-name" placeholder="e.g. Rahul Sharma"/></div>
+  <div class="fg"><label>Start Date *</label><input type="date" id="a-date"/></div>
+  <div class="fg"><label>Monthly Fee ₹ *</label><input type="number" id="a-fee" placeholder="e.g. 500" min="0"/></div>
+  <button class="btn-add-student" onclick="addStudent()">➕ Add Student</button>
+</div>
+
+<main id="mainGrid"></main>
+</div>
+
+<!-- DEL MODAL -->
+<div class="overlay" id="delOv">
+  <div class="modal del-modal">
+    <div class="del-icon">🗑️</div>
+    <h2>Student Delete Karein?</h2>
+    <div class="del-name" id="delName"></div>
+    <div class="del-warn">⚠️ Saari payment history bhi delete ho jayegi!</div>
+    <div class="modal-actions">
+      <button class="btn-cancel-m" onclick="closeOv('delOv')">Cancel</button>
+      <button class="btn-del-confirm" onclick="confirmDel()">Delete Karo 🗑️</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT DATE MODAL -->
+<div class="overlay" id="editOv">
+  <div class="modal">
+    <h2>✏️ Start Date Badlo</h2>
+    <div class="fg"><label>Naya Start Date</label><input type="date" id="edit-date"/></div>
+    <div class="modal-actions">
+      <button class="btn-cancel-m" onclick="closeOv('editOv')">Cancel</button>
+      <button class="btn-ok" onclick="confirmEdit()">Save ✅</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="overlay" id="chpwOv">
+  <div class="modal">
+    <h2>🔑 Password Badlo</h2>
+    <div style="background:var(--gold-l);border-radius:10px;padding:10px 14px;font-size:.85rem;color:#78350F;margin-bottom:16px">⚠️ Naya password yaad rakhna zaroori hai!</div>
+    <div class="fg"><label>Current Password</label>
+      <div class="pw-wrap" style="margin:0"><input type="password" id="cp-old" placeholder="Current password"/><button class="eye-btn" onclick="toggleEye('cp-old',this)">👁️</button></div>
+    </div>
+    <div class="fg"><label>New Password (min 4 chars)</label>
+      <div class="pw-wrap" style="margin:0"><input type="password" id="cp-new" placeholder="New password"/><button class="eye-btn" onclick="toggleEye('cp-new',this)">👁️</button></div>
+    </div>
+    <div class="fg"><label>Confirm New Password</label>
+      <div class="pw-wrap" style="margin:0"><input type="password" id="cp-cf" placeholder="Repeat new password"/><button class="eye-btn" onclick="toggleEye('cp-cf',this)">👁️</button></div>
+    </div>
+    <div class="lock-err" id="chpwErr" style="margin-top:6px"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel-m" onclick="closeOv('chpwOv')">Cancel</button>
+      <button class="btn-ok" onclick="confirmChpw()">Save 🔐</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── MONTHS ──
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_KEYS = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+// ── PASS ──
+const DEF_PASS = 'tuition123';
+let unlocked = false;
+function getPass(){return localStorage.getItem('t_pass')||DEF_PASS}
+function setPass(p){localStorage.setItem('t_pass',p)}
+function initLock(){
+  if(!localStorage.getItem('t_pass')){
+    document.getElementById('lockSub').textContent='Pehli baar! Default: tuition123';
+    document.getElementById('lockHint').textContent='Login ke baad password zaroor badlo 🔑';
+  }
+}
+function doUnlock(){
+  const v=document.getElementById('lockInp').value;
+  const inp=document.getElementById('lockInp');
+  if(v===getPass()){
+    unlocked=true;
+    document.getElementById('lockScreen').classList.add('hidden');
+    document.getElementById('app').style.display='block';
+    document.getElementById('lockInp').value='';
+    document.getElementById('lockErr').textContent='';
+    render();
+  } else {
+    document.getElementById('lockErr').textContent='❌ Galat password!';
+    inp.classList.add('err');
+    setTimeout(()=>inp.classList.remove('err'),500);
+  }
+}
+function lockApp(){
+  unlocked=false;
+  document.getElementById('lockScreen').classList.remove('hidden');
+  document.getElementById('app').style.display='none';
+  document.getElementById('lockInp').value='';
+  document.getElementById('lockErr').textContent='';
+}
+function openChpw(){document.getElementById('chpwOv').classList.add('open')}
+function confirmChpw(){
+  const old=document.getElementById('cp-old').value;
+  const nw=document.getElementById('cp-new').value;
+  const cf=document.getElementById('cp-cf').value;
+  const err=document.getElementById('chpwErr');
+  if(old!==getPass()){err.textContent='❌ Current password galat!';return}
+  if(nw.length<4){err.textContent='❌ Kam se kam 4 characters chahiye!';return}
+  if(nw!==cf){err.textContent='❌ Passwords match nahi kiye!';return}
+  setPass(nw);err.textContent='';
+  closeOv('chpwOv');
+  ['cp-old','cp-new','cp-cf'].forEach(id=>document.getElementById(id).value='');
+  alert('✅ Password badal diya! Naya password: '+nw);
+}
+function toggleEye(id,btn){
+  const inp=document.getElementById(id);
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'👁️':'🙈';
+}
+
+// ── DATA ──
+let students = JSON.parse(localStorage.getItem('t_students')||'[]');
+function save(){localStorage.setItem('t_students',JSON.stringify(students))}
+
+// ── HELPERS ──
+function initials(name){return name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+function fmtDate(d){if(!d)return '—'; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+function curYM(){const n=new Date();return n.getFullYear()+'-'+(String(n.getMonth()+1).padStart(2,'0'))}
+
+// "Paid till" = last consecutive paid month starting from student's join month
+function paidTill(s){
+  const joinY=parseInt(s.startDate.slice(0,4));
+  const joinM=parseInt(s.startDate.slice(5,7)); // 1-based
+  const pays=s.payments||{};
+  let last=null;
+  for(let y=joinY;y<=2030;y++){
+    for(let m=(y===joinY?joinM:1);m<=12;m++){
+      const key=y+'-'+(String(m).padStart(2,'0'));
+      if(pays[key]){last={y,m,key};} else {return last;}
+    }
+  }
+  return last;
+}
+
+function totalPaid(s){
+  return Object.keys(s.payments||{}).length * s.fee;
+}
+
+// ── RENDER ──
+function render(){
+  if(!unlocked)return;
+  // stats
+  const now=curYM();
+  const total=students.reduce((a,s)=>a+totalPaid(s),0);
+  const pendingNow=students.filter(s=>s.startDate.slice(0,7)<=now && !(s.payments||{})[now]).length;
+  document.getElementById('stat-students').textContent=students.length;
+  document.getElementById('stat-earned').textContent='₹'+total.toLocaleString('en-IN');
+  document.getElementById('stat-pending').textContent=pendingNow+' students';
+
+  const main=document.getElementById('mainGrid');
+  if(!students.length){
+    main.innerHTML=`<div class="empty-state"><div class="ei">🎒</div><h3>Koi student nahi abhi tak!</h3><p>Upar form bhar ke pehla student add karo.</p></div>`;
+    return;
+  }
+  main.innerHTML=students.map(s=>cardHTML(s)).join('');
+}
+
+function cardHTML(s){
+  const pt=paidTill(s);
+  const ptLabel=pt?`✅ Paid till ${MONTHS[pt.m-1]} ${pt.y}`:'❌ No payment yet';
+  const ptClass=pt?'green':'gray';
+  const tp=totalPaid(s);
+  const joinY=parseInt(s.startDate.slice(0,4));
+  const joinM=parseInt(s.startDate.slice(5,7));
+  const today=new Date();
+  const curY=today.getFullYear();
+  const curM=today.getMonth()+1;
+
+  let rows='';
+  // show months from join year to current year+1 for planning
+  for(let y=joinY;y<=curY;y++){
+    const startM=(y===joinY?joinM:1);
+    const endM=(y===curY?curM:12);
+    for(let m=startM;m<=endM;m++){
+      const key=y+'-'+(String(m).padStart(2,'0'));
+      const pays=s.payments||{};
+      const isPaid=!!pays[key];
+      const paidDate=isPaid?pays[key]:'';
+      const isCurrentYear=(y===joinY&&y===curY)||(y!==joinY);
+      rows+=`<div class="month-row${isPaid?' is-paid':''}">
+        <input type="checkbox" class="month-cb" ${isPaid?'checked':''} onchange="toggleMonth('${s.id}','${key}',this)"/>
+        <span class="month-label">${MONTHS[m-1]}${y!==curY?` '${String(y).slice(2)}`:''}${y===joinY&&y<curY?` '${String(y).slice(2)}`:''}${y===joinY&&y===curY?'':''}</span>
+        <span class="submitted-label">Submitted on</span>
+        <input type="date" class="month-date-input" value="${paidDate}" ${isPaid?'':'disabled'} onchange="updateDate('${s.id}','${key}',this.value)"/>
+      </div>`;
+    }
+  }
+
+  return `<div class="student-card">
+    <div class="card-head">
+      <div class="avatar">${escH(initials(s.name))}</div>
+      <div class="card-head-info">
+        <h2>${escH(s.name)}</h2>
+        <div class="meta">Start: <strong>${fmtDate(s.startDate)}</strong> &nbsp;|&nbsp; Fee: <strong>₹${Number(s.fee).toLocaleString('en-IN')}/month</strong></div>
+      </div>
+      <div class="paid-till-badge">
+        <span class="ptb ${ptClass}">${ptLabel}</span>
+        <span class="total-paid-chip">Total: ₹${tp.toLocaleString('en-IN')}</span>
+      </div>
+    </div>
+    <div class="months-wrap">${rows}</div>
+    <div class="card-actions">
+      <button class="btn-card btn-edit-date" onclick="openEdit('${s.id}')">✏️ Edit Start Date</button>
+      <button class="btn-card btn-del-student" onclick="openDel('${s.id}')">🗑️ Delete Student</button>
+    </div>
+  </div>`;
+}
+
+function escH(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
+
+// ── TOGGLE MONTH ──
+function toggleMonth(sid,key,cb){
+  const s=students.find(x=>x.id===sid);
+  if(!s.payments)s.payments={};
+  if(cb.checked){
+    s.payments[key]=new Date().toISOString().slice(0,10);
+  } else {
+    delete s.payments[key];
+  }
+  save();render();
+}
+
+function updateDate(sid,key,val){
+  const s=students.find(x=>x.id===sid);
+  if(s.payments&&s.payments[key]!==undefined) s.payments[key]=val;
+  save();
+}
+
+// ── ADD STUDENT ──
+function addStudent(){
+  const name=document.getElementById('a-name').value.trim();
+  const date=document.getElementById('a-date').value;
+  const fee=document.getElementById('a-fee').value;
+  if(!name||!date||!fee){alert('Teeno fields bharni zaroori hain!');return}
+  students.push({id:Date.now().toString(),name,startDate:date,fee:Number(fee),payments:{}});
+  save();
+  document.getElementById('a-name').value='';
+  document.getElementById('a-date').value='';
+  document.getElementById('a-fee').value='';
+  render();
+}
+
+// ── DELETE ──
+let activeDelId=null;
+function openDel(id){activeDelId=id;document.getElementById('delName').textContent=students.find(x=>x.id===id).name;document.getElementById('delOv').classList.add('open')}
+function confirmDel(){if(!activeDelId)return;students=students.filter(x=>x.id!==activeDelId);save();closeOv('delOv');render()}
+
+// ── EDIT DATE ──
+let activeEditId=null;
+function openEdit(id){activeEditId=id;document.getElementById('edit-date').value=students.find(x=>x.id===id).startDate;document.getElementById('editOv').classList.add('open')}
+function confirmEdit(){
+  const d=document.getElementById('edit-date').value;
+  if(!d){alert('Date daalo!');return}
+  students.find(x=>x.id===activeEditId).startDate=d;
+  save();closeOv('editOv');render();
+}
+
+// ── OVERLAY ──
+function closeOv(id){document.getElementById(id).classList.remove('open')}
+['delOv','editOv','chpwOv'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)closeOv(id)})
+});
+
+// ── INIT ──
+initLock();
+document.getElementById('lockInp').addEventListener('keydown',e=>{if(e.key==='Enter')doUnlock()});
+</script>
+</body>
+</html>
